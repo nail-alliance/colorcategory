@@ -61,9 +61,13 @@ class Custom {
         $products = [];
         foreach($collection as $product) {
             $product_ = $product->getData();
-            $product_['product_page_image_small'] = $this->_productImageHelper->init($product, 'product_page_image_small')
-                ->setImageFile($product->getThumbnail())
-                ->resize(400)
+            $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
+                ->setImageFile($product->getSwatchImage())
+                ->resize(160)
+                ->getUrl();
+            $product_['product_swatch_image_2x'] = $this->_productImageHelper->init($product, 'product_swatch_image_2x')
+                ->setImageFile($product->getSwatchImage())
+                ->resize(420)
                 ->getUrl();
             // $product_['stock_qty'] = ($this->_stockItemRepository->get($product->getId()))->getData();
             $product_['in_stock'] = $product->isInStock();
