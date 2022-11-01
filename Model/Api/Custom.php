@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\CatalogInventory\Model\Stock\StockItemRepository;
 use Magento\Catalog\Helper\Image;
+use Magento\Catalog\Model\Product\Interceptor as ProductInterceptor;
 
 class Custom {
     /** @var LoggerInterface */
@@ -59,11 +60,12 @@ class Custom {
     private function parseCategoryProducts($collection): array
     {
         $products = [];
+        /** @var ProductInterceptor */
         foreach($collection as $product) {
             $product_ = $this->filterProductResult($product, [
                
             ]);
-            $product_['class_name'] = $product::class;
+            // $product_['class_name'] = $product::class;
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
                 ->setImageFile($product->getSwatchImage())
                 ->resize(160)
@@ -84,7 +86,7 @@ class Custom {
         return $products;
     }
 
-    private function filterProductResult($product, $allowedKeys)
+    private function filterProductResult(ProductInterceptor $product, array $allowedKeys): array
     {
         $productData = $product->getData();
         if (empty($allowedKeys)) {
