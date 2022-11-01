@@ -6,7 +6,7 @@ interface CustomInterface
 {
     /**
      * GET for Post api
-     * @return string
+     * @return array
      */
     public function getData(string $value, string $store_id);
 }
