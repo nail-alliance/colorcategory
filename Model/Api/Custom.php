@@ -60,8 +60,10 @@ class Custom {
     {
         $products = [];
         foreach($collection as $product) {
-            var_dump($product);
-            $product_ = $product->getData();
+            $product_ = $this->filterProductResult($product, [
+               
+            ]);
+            $product_['type'] = gettype($product);
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
                 ->setImageFile($product->getSwatchImage())
                 ->resize(160)
@@ -82,8 +84,16 @@ class Custom {
         return $products;
     }
 
-    private function filterProductResult($product)
+    private function filterProductResult($product, $allowedKeys)
     {
-
+        $productData = $product->getData();
+        if (empty($allowedKeys)) {
+            return $productData;
+        }
+        $product_ = [];
+        foreach($allowedKeys as $allowed) {
+            $product_[$allowed] = $product[$allowed];
+        }
+        return $product_;
     }
 }
