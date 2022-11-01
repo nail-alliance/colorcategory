@@ -5,6 +5,8 @@ namespace Nailalliance\Colorcategory\Model\Api;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
+use Magento\CatalogInventory\Model\Stock\StockItemRepository;
+use Magento\Catalog\Helper\Image;
 
 class Custom {
     /** @var LoggerInterface */
@@ -13,12 +15,22 @@ class Custom {
     /** @var CollectionFactory */
     protected $_productCollectionFactory;
 
+    /** @var StockItemRepository */
+    protected $_stockItemRepository;
+
+    /** @var Image */
+    protected $_productImageHelper;
+
     public function __construct(
         LoggerInterface $logger, 
-        CollectionFactory $productCollectionFactory
+        CollectionFactory $productCollectionFactory,
+        StockItemRepository $stockItemRepository,
+        Image $image
     ) {
         $this->logger = $logger;
         $this->_productCollectionFactory = $productCollectionFactory;
+        $this->_stockItemRepository = $stockItemRepository;
+        $this->_productImageHelper = $image;
     }
 
     /**
@@ -47,7 +59,11 @@ class Custom {
     {
         $products = [];
         foreach($collection as $product) {
-            $products[] = $product->getData();
+            $product_ = $product->getData();
+            $product_['product_thumbnail_image'] = $this->_productImageHelper->init($product, 'product_thumbnail_image')->getUrl();
+            $product_['stock_qty'] = $this->_stockItemRepository->get($product->getId());
+            $products[] = $product_;
+            
             // $products[] = [
             //     'name' => $product->getName(),
             //     'url' => $product->getProductUrl()
