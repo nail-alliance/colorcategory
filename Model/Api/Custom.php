@@ -40,17 +40,18 @@ class Custom {
             $response = ['success' => false, 'message' => $e->getMessage()];
         }
 
-        return json_encode($response); 
+        return $response; 
     }
 
     private function parseCategoryProducts($collection): array
     {
         $products = [];
         foreach($collection as $product) {
-            $products[] = [
-                'name' => $product->getName(),
-                'url' => $product->getProductUrl()
-            ];
+            $products[] = $product->getData();
+            // $products[] = [
+            //     'name' => $product->getName(),
+            //     'url' => $product->getProductUrl()
+            // ];
         }
         return $products;
     }
