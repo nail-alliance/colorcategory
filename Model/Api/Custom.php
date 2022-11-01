@@ -63,7 +63,7 @@ class Custom {
             $product_ = $this->filterProductResult($product, [
                
             ]);
-            $product_['type'] = gettype($product);
+            $product_['class_name'] = $product::class;
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
                 ->setImageFile($product->getSwatchImage())
                 ->resize(160)
