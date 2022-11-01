@@ -60,6 +60,7 @@ class Custom {
     {
         $products = [];
         foreach($collection as $product) {
+            var_dump($product);
             $product_ = $product->getData();
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
                 ->setImageFile($product->getSwatchImage())
@@ -79,5 +80,10 @@ class Custom {
             // ];
         }
         return $products;
+    }
+
+    private function filterProductResult($product)
+    {
+
     }
 }
