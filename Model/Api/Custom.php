@@ -63,12 +63,13 @@ class Custom {
         /** @var ProductInterceptor */
         foreach($collection as $product) {
             $product_ = $this->filterProductResult($product, [
-               'entity_id',
-               'sku',
-               'status',
-               'quantity_and_stock_status',
-               'name',
-               'url_key',
+            //    'entity_id',
+            //    'sku',
+            //    'status',
+            //    'quantity_and_stock_status',
+            //    'name',
+            //    'url_key',
+            //    'rgb',
             ]);
             // $product_['class_name'] = $product::class;
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
@@ -99,7 +100,9 @@ class Custom {
         }
         $product_ = [];
         foreach($allowedKeys as $allowed) {
-            $product_[$allowed] = $product[$allowed];
+            if (isset($product[$allowed])) {
+                $product_[$allowed] = $product[$allowed];
+            }
         }
         return $product_;
     }
