@@ -9,6 +9,11 @@ To update in php 7.4
 
 Add to composer.json
 
+```
+bin/magento module:enable Nailalliance_Colorcategory
+bin/magento setup:upgrade
+```
+
 ```JSON
     "repositories": {
         "0": {
