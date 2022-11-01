@@ -63,7 +63,12 @@ class Custom {
         /** @var ProductInterceptor */
         foreach($collection as $product) {
             $product_ = $this->filterProductResult($product, [
-               
+               'entity_id',
+               'sku',
+               'status',
+               'quantity_and_stock_status',
+               'name',
+               'url_key',
             ]);
             // $product_['class_name'] = $product::class;
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
