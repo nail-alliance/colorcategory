@@ -36,7 +36,7 @@ class Custom {
     /**
      * @inheritdoc
      */
-    public function getData($value)
+    public function getData(string $value, string $store_id)
     {
         $response = ['success' => false];
 
@@ -45,6 +45,7 @@ class Custom {
             $collection = $this->_productCollectionFactory->create();
             $collection->addAttributeToSelect('*');
             $collection->addCategoriesFilter(['in' => $ids]);
+            $collection->addStoreFilter(intval($store_id));
 
             // $response = ['success' => true, 'message' => $value];
             $response = $this->parseCategoryProducts($collection);
