@@ -1,4 +1,11 @@
 <?php
+/**
+ * Custom API
+ * Select product by category for a single store id.
+ * 
+ * @author Fabian Nino <fabian@nailalliance.com>
+ * @copyright Copyright (c) 2022, Nail Alliance
+*/
 
 use Magento\Framework\Component\ComponentRegistrar;
 
