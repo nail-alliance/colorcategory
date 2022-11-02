@@ -47,6 +47,7 @@ class Custom {
             $collection->addAttributeToSelect('*');
             $collection->addCategoriesFilter(['in' => $ids]);
             $collection->addStoreFilter(intval($store_id));
+            $collection->adAttributeToSort("position", "desc");
 
             // $response = ['success' => true, 'message' => $value];
             $response = $this->parseCategoryProducts($collection);
@@ -63,14 +64,20 @@ class Custom {
         /** @var ProductInterceptor */
         foreach($collection as $product) {
             $product_ = $this->filterProductResult($product, [
-            //    'entity_id',
-            //    'sku',
-            //    'status',
-            //    'quantity_and_stock_status',
-            //    'name',
-            //    'url_key',
-            //    'rgb',
+               'entity_id',
+               'sku',
+               'status',
+               'quantity_and_stock_status',
+               'name',
+               'url_key',
+               'rgb',
             ]);
+            if (isset($product_['rgb'])) {
+                list ($red, $green, $blue) = explode(',', $product_['rgb']);
+                $product_['red'] = $red;
+                $product_['green'] = $green;
+                $product_['blue'] = $blue;
+            }
             // $product_['class_name'] = $product::class;
             $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
                 ->setImageFile($product->getSwatchImage())
