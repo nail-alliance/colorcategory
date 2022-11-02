@@ -47,7 +47,7 @@ class Custom {
             $collection->addAttributeToSelect('*');
             $collection->addCategoriesFilter(['in' => $ids]);
             $collection->addStoreFilter(intval($store_id));
-            $collection->addAttributeToSort("position", "desc");
+            $collection->addAttributeToSort("position", "asc");
 
             // $response = ['success' => true, 'message' => $value];
             $response = $this->parseCategoryProducts($collection);
