@@ -85,23 +85,25 @@ class Custom {
                 $product_['green'] = $green;
                 $product_['blue'] = $blue;
             }
-            // $product_['class_name'] = $product::class;
-            $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
-                ->setImageFile($product->getSwatchImage())
-                ->resize(200)
-                ->getUrl();
-            $product_['product_swatch_image_2x'] = $this->_productImageHelper->init($product, 'product_swatch_image_2x')
-                ->setImageFile($product->getSwatchImage())
-                ->resize(400)
-                ->getUrl();
-            // $product_['stock_qty'] = ($this->_stockItemRepository->get($product->getId()))->getData();
-            $product_['in_stock'] = $product->isInStock();
-            $products[] = $product_;
-            
-            // $products[] = [
-            //     'name' => $product->getName(),
-            //     'url' => $product->getProductUrl()
-            // ];
+            if($product['status'] == 1) {
+                // $product_['class_name'] = $product::class;
+                $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
+                    ->setImageFile($product->getSwatchImage())
+                    ->resize(200)
+                    ->getUrl();
+                $product_['product_swatch_image_2x'] = $this->_productImageHelper->init($product, 'product_swatch_image_2x')
+                    ->setImageFile($product->getSwatchImage())
+                    ->resize(400)
+                    ->getUrl();
+                // $product_['stock_qty'] = ($this->_stockItemRepository->get($product->getId()))->getData();
+                $product_['in_stock'] = $product->isInStock();
+                $products[] = $product_;
+                
+                // $products[] = [
+                //     'name' => $product->getName(),
+                //     'url' => $product->getProductUrl()
+                // ];
+            }
         }
         return $products;
     }
