@@ -2,13 +2,13 @@
   "name": "nailalliance/colorcategory",
   "description": "REST Category Api",
   "type": "magento2-module",
-  "version": "1.0.14",
+  "version": "1.2.0",
   "license": [
     "OSL-3.0",
     "AFL-3.0"
   ],
   "require": {
-    "php": "^7.0.0|^8.0.0"
+    "php": "^8.0.0"
   },
   "autoload": {
     "files": [ "registration.php" ],

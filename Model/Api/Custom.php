@@ -51,18 +51,39 @@ class Custom {
         try {
             $ids = explode(",", $value);
             $collection = $this->_productCollectionFactory->create();
-            $collection->addAttributeToSelect('*');
+
+            // OPTIMIZATION 1: Only select the attributes you actually need instead of '*'
+            $collection->addAttributeToSelect(['sku', 'status', 'quantity_and_stock_status', 'name', 'url_key', 'rgb', 'image']);
+
             $collection->addCategoriesFilter(['in' => $ids]);
             $collection->addStoreFilter(intval($store_id));
             $collection->addAttributeToSort("position", "asc");
 
-            // $response = ['success' => true, 'message' => $value];
-            $response = $this->parseCategoryProducts($collection);
+            // OPTIMIZATION 2: Paginate the collection
+            $pageSize = 200; // Process 200 products at a time
+            $collection->setPageSize($pageSize);
+            $lastPageNumber = $collection->getLastPageNumber();
+
+            $products = [];
+
+            for ($currentPage = 1; $currentPage <= $lastPageNumber; $currentPage++) {
+                $collection->setCurPage($currentPage);
+
+                // Process the current batch
+                $batchProducts = $this->parseCategoryProducts($collection);
+                $products = array_merge($products, $batchProducts);
+
+                // OPTIMIZATION 3: Clear the collection from memory before the next loop
+                $collection->clear();
+            }
+
+            $response = $products; // Return the fully aggregated array
+
         } catch (Exception $e) {
             $response = ['success' => false, 'message' => $e->getMessage()];
         }
 
-        return $response; 
+        return $response;
     }
 
     private function parseCategoryProducts($collection): array
