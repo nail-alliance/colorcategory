@@ -2,7 +2,7 @@
 
 To update in php 7.4
 ```
-composer require nailalliance/colorcategory:dev-main
+composer require nailalliance/colorcategory
 ```
 
 ## To Install
