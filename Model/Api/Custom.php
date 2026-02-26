@@ -2,42 +2,38 @@
 /**
  * Custom API
  * Select product by category for a single store id.
- * 
- * @author Fabian Nino <fabian@nailalliance.com>
+ * * @author Fabian Nino <fabian@nailalliance.com>
  * @copyright Copyright (c) 2022, Nail Alliance
-*/
+ */
 
 namespace Nailalliance\Colorcategory\Model\Api;
 
 use Exception;
 use Psr\Log\LoggerInterface;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
-use Magento\CatalogInventory\Model\Stock\StockItemRepository;
 use Magento\Catalog\Helper\Image;
-use Magento\Catalog\Model\Product\Interceptor as ProductInterceptor;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Nailalliance\Colorcategory\Api\CustomInterface;
 
-class Custom {
+class Custom implements CustomInterface
+{
     /** @var LoggerInterface */
     protected $logger;
 
     /** @var CollectionFactory */
     protected $_productCollectionFactory;
 
-    /** @var StockItemRepository */
-    protected $_stockItemRepository;
-
     /** @var Image */
     protected $_productImageHelper;
 
     public function __construct(
-        LoggerInterface $logger, 
+        LoggerInterface $logger,
         CollectionFactory $productCollectionFactory,
-        StockItemRepository $stockItemRepository,
         Image $image
     ) {
         $this->logger = $logger;
         $this->_productCollectionFactory = $productCollectionFactory;
-        $this->_stockItemRepository = $stockItemRepository;
         $this->_productImageHelper = $image;
     }
 
@@ -46,21 +42,31 @@ class Custom {
      */
     public function getData(string $value, string $store_id)
     {
-        $response = ['success' => false];
-
         try {
             $ids = explode(",", $value);
             $collection = $this->_productCollectionFactory->create();
 
-            // OPTIMIZATION 1: Only select the attributes you actually need instead of '*'
-            $collection->addAttributeToSelect(['sku', 'status', 'quantity_and_stock_status', 'name', 'url_key', 'rgb', 'image']);
+            // 1. Select only what we need. Added 'swatch_image' to prevent lazy-loading.
+            $collection->addAttributeToSelect(['sku', 'name', 'url_key', 'rgb', 'swatch_image', 'quantity_and_stock_status']);
+
+            // 2. Filter by Enabled Status at the Database level
+            $collection->addAttributeToFilter('status', Status::STATUS_ENABLED);
 
             $collection->addCategoriesFilter(['in' => $ids]);
-            $collection->addStoreFilter(intval($store_id));
+            $collection->addStoreFilter((int)$store_id);
             $collection->addAttributeToSort("position", "asc");
 
-            // OPTIMIZATION 2: Paginate the collection
-            $pageSize = 200; // Process 200 products at a time
+            // 3. Join Stock Data to prevent querying stock per-product in the loop
+            $collection->joinField(
+                'is_in_stock',
+                'cataloginventory_stock_item',
+                'is_in_stock',
+                'product_id=entity_id',
+                '{{table}}.stock_id=1',
+                'left'
+            );
+
+            $pageSize = 200;
             $collection->setPageSize($pageSize);
             $lastPageNumber = $collection->getLastPageNumber();
 
@@ -69,78 +75,66 @@ class Custom {
             for ($currentPage = 1; $currentPage <= $lastPageNumber; $currentPage++) {
                 $collection->setCurPage($currentPage);
 
-                // Process the current batch
-                $batchProducts = $this->parseCategoryProducts($collection);
-                $products = array_merge($products, $batchProducts);
+                /** @var Product $product */
+                foreach ($collection as $product) {
+                    $products[] = $this->parseProduct($product);
+                }
 
-                // OPTIMIZATION 3: Clear the collection from memory before the next loop
                 $collection->clear();
             }
 
-            $response = $products; // Return the fully aggregated array
+            return $products;
 
         } catch (Exception $e) {
-            $response = ['success' => false, 'message' => $e->getMessage()];
+            $this->logger->error('Colorcategory API Error: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-
-        return $response;
     }
 
-    private function parseCategoryProducts($collection): array
+    /**
+     * Extracts and formats product data efficiently
+     */
+    private function parseProduct(Product $product): array
     {
-        $products = [];
-        /** @var ProductInterceptor */
-        foreach($collection as $product) {
-            $product_ = $this->filterProductResult($product, [
-               'entity_id',
-               'sku',
-               'status',
-               'quantity_and_stock_status',
-               'name',
-               'url_key',
-               'rgb',
-            ]);
-            if (isset($product_['rgb'])) {
-                list ($red, $green, $blue) = explode(',', $product_['rgb']);
-                $product_['red'] = $red;
-                $product_['green'] = $green;
-                $product_['blue'] = $blue;
-            }
-            if($product['status'] == 1) {
-                // $product_['class_name'] = $product::class;
-                $product_['product_swatch_image'] = $this->_productImageHelper->init($product, 'product_swatch_image')
-                    ->setImageFile($product->getSwatchImage())
-                    ->resize(200)
-                    ->getUrl();
-                $product_['product_swatch_image_2x'] = $this->_productImageHelper->init($product, 'product_swatch_image_2x')
-                    ->setImageFile($product->getSwatchImage())
-                    ->resize(400)
-                    ->getUrl();
-                // $product_['stock_qty'] = ($this->_stockItemRepository->get($product->getId()))->getData();
-                $product_['in_stock'] = $product->isInStock();
-                $products[] = $product_;
-                
-                // $products[] = [
-                //     'name' => $product->getName(),
-                //     'url' => $product->getProductUrl()
-                // ];
-            }
-        }
-        return $products;
-    }
+        $productData = [
+            'entity_id' => $product->getId(),
+            'sku'       => $product->getSku(),
+            'status'    => $product->getStatus(),
+            'name'      => $product->getName(),
+            'url_key'   => $product->getUrlKey(),
+            'rgb'       => $product->getData('rgb'),
+            'in_stock'  => (bool)$product->getData('is_in_stock')
+        ];
 
-    private function filterProductResult(ProductInterceptor $product, array $allowedKeys): array
-    {
-        $productData = $product->getData();
-        if (empty($allowedKeys)) {
-            return $productData;
-        }
-        $product_ = [];
-        foreach($allowedKeys as $allowed) {
-            if (isset($product[$allowed])) {
-                $product_[$allowed] = $product[$allowed];
+        // Format RGB string into array keys safely
+        if (!empty($productData['rgb'])) {
+            $rgbParts = explode(',', $productData['rgb']);
+            if (count($rgbParts) === 3) {
+                $productData['red']   = trim($rgbParts[0]);
+                $productData['green'] = trim($rgbParts[1]);
+                $productData['blue']  = trim($rgbParts[2]);
             }
         }
-        return $product_;
+
+        // Process images only if a swatch image actually exists
+        $swatchImage = $product->getData('swatch_image');
+        if ($swatchImage && $swatchImage !== 'no_selection') {
+            $productData['product_swatch_image'] = $this->_productImageHelper
+                ->init($product, 'product_swatch_image')
+                ->setImageFile($swatchImage)
+                ->resize(200)
+                ->getUrl();
+
+            $productData['product_swatch_image_2x'] = $this->_productImageHelper
+                ->init($product, 'product_swatch_image_2x')
+                ->setImageFile($swatchImage)
+                ->resize(400)
+                ->getUrl();
+        } else {
+            $productData['product_swatch_image'] = null;
+            $productData['product_swatch_image_2x'] = null;
+        }
+
+        return $productData;
     }
 }
